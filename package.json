@@ -1,0 +1,44 @@
+{
+    "name": "ebmlcontroller",
+    "version": "0.1.0",
+    "description": "JS library to drive virtual avatars with text instructions",
+    "type": "module",
+    "main": "./build/CharacterController.module.min.js",
+    "module": "./build/CharacterController.module.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/upf-gti/eBMLController"
+    },
+    "files": [
+        "build",
+        "build/extensions",
+        "LICENSE",
+        "package.json",
+        "README.md"
+    ],
+    "keywords": [
+        "ebmlcontroller",
+        "ebml",
+        "bml",
+        "controller",
+        "animation",
+        "script",
+        "avatar",
+        "three.js"
+    ],
+    "author": "japopra",
+    "license": "Apache-2.0",
+    "bugs": {
+        "url": "https://github.com/upf-gti/eBMLController/issues"
+    },
+    "scripts": {
+        "rollup-js": "rollup -c rollup.build.config.js",
+        "build": "npm run rollup-js"
+    },
+    "devDependencies": {
+        "@rollup/plugin-terser": "^0.4.4"
+    },
+    "dependencies": {
+        "rollup": "^4.53.2"
+    }
+}
