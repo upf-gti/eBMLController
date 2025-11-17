@@ -1,6 +1,6 @@
 {
     "name": "ebmlcontroller",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "JS library to drive virtual avatars with text instructions",
     "type": "module",
     "main": "./build/CharacterController.module.min.js",
