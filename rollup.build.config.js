@@ -5,14 +5,14 @@ export default [
         input: "src/index.controllers.js",
         output: [
             {
-                file: 'build/CharacterController.module.js',
+                file: 'build/eBMLController.module.js',
                 format: 'esm',
-                banner: '// This is a generated file. Do not edit.'
+                banner: '// This is a generated file. Do not edit. \n // Developers: @japopra @evallsg @gerardllorach @carolinadcf'
             },
             {
-                file: 'build/CharacterController.module.min.js',
+                file: 'build/eBMLController.module.min.js',
                 format: 'esm',
-                banner: '// This is a generated file. Do not edit.',
+                banner: '// This is a generated file. Do not edit. \n // Developers: @japopra @evallsg @gerardllorach @carolinadcf',
                 plugins: [terser()]
             }
         ]
@@ -23,6 +23,7 @@ export default [
             {
                 file: 'build/extensions/SigmlToBML.min.js',
                 format: 'esm',
+                banner: '// This is a generated file. Do not edit. \n // Developers: @japopra',
                 plugins: [terser()]
             }
         ]

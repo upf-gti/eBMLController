@@ -3,8 +3,8 @@
     "version": "0.1.1",
     "description": "JS library to drive virtual avatars with text instructions",
     "type": "module",
-    "main": "./build/CharacterController.module.min.js",
-    "module": "./build/CharacterController.module.js",
+    "main": "./build/eBMLController.module.min.js",
+    "module": "./build/eBMLController.module.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/upf-gti/eBMLController"

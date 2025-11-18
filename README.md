@@ -11,8 +11,8 @@ This library is powering the scripting animations of [Animics](https://animics.g
 
 - Jaume Pozo [@japopra](https://github.com/japopra)
 - Eva Valls [@evallsg](https://github.com/evallsg)
+- Gerard LLorach [@gerardllorach](https://github.com/gerardllorach)
 - Carolina del Corral [@carolinadcf](https://github.com/carolinadcf)
-
 
 ## Acknowledgements
 We would like to extend our gratitude to the creators and maintainers of the libraries for their invaluable contributions to the open-source community.

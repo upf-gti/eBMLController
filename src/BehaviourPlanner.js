@@ -127,7 +127,6 @@ class BehaviourPlanner{
     
   }
   
-  //!!!!!!!!!!!!!!!!!!
   /*abortSpeech(){
     // Cancel audio and lipsync in Facial
     if (BehaviourPlanner.Facial){
