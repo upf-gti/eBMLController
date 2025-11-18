@@ -724,18 +724,24 @@ class HandShape {
     }
 
     // selectMode: if str is not numbers,  0 does nothing, 1 same shapes as mainbend in basic handshape, 2 same as mainbend in thumbcombinations
-    _stringToFingerBend( str, outFinger, selectMode = 0, bendRange = 4 ){
-        if ( !str ){ return; }
+    _bmlToFingerBend( fingerIinput, outFinger, selectMode = 0, bendRange = 4 ){
+        if ( !fingerIinput ){ return; }
 
-        if ( typeof( str ) == "string" ){ str = str.toUpperCase(); }
-        let b = this.handBendings[ str ];
+        const isString = typeof( fingerIinput ) == "string";
+        if ( isString ){ fingerIinput = fingerIinput.toUpperCase(); }
+        let b = this.handBendings[ fingerIinput ];
         if ( !b ){ 
-            if ( typeof( str ) == "string" ){
+            if ( isString ){
                 // strings of three int values 0-9
-                for( let i = 0; (i < 3) && (i < str.length); ++i ){
-                    let val = parseInt( str[i] );
+                for( let i = 0; (i < 3) && (i < fingerIinput.length); ++i ){
+                    let val = parseInt( fingerIinput[i] );
                     if ( isNaN(val) ){ continue; }
                     outFinger[1+i] = val / bendRange;
+                }
+            }else if ( Array.isArray(fingerIinput) ){
+                // array of normalized values. [-infinity, +infinity]
+                for( let i = 0; (i < 3) && (i < fingerIinput.length); ++i){
+                    outFinger[1+i] = fingerIinput[i]; // normalized value
                 }
             }
             return;
@@ -906,18 +912,18 @@ class HandShape {
         // }
 
         // specific bendings
-        // this._stringToFingerBend( bml.bend1, this.trgG[0], 1, bendRange ); // thumb
-        this._stringToFingerBend( bml.bend2, shape.index, 1, bendRange );
-        this._stringToFingerBend( bml.bend3, shape.middle, 1, bendRange );
-        this._stringToFingerBend( bml.bend4, shape.ring, 1, bendRange );
-        this._stringToFingerBend( bml.bend5, shape.pinky, 1, bendRange );
+        // this._bmlToFingerBend( bml.bend1, this.trgG[0], 1, bendRange ); // thumb
+        this._bmlToFingerBend( bml.bend2, shape.index, 1, bendRange );
+        this._bmlToFingerBend( bml.bend3, shape.middle, 1, bendRange );
+        this._bmlToFingerBend( bml.bend4, shape.ring, 1, bendRange );
+        this._bmlToFingerBend( bml.bend5, shape.pinky, 1, bendRange );
 
         // check if any splay attributes is present. ( function already checks if passed argument is valid )           
         // this._stringToSplay( bml.splay1, this.trgG[0] ); // thumb
-        this._stringToSplay( bml.splay2 ? bml.splay2 : bml.mainSplay, shape.index );
+        this._stringToSplay( bml.splay2 ?? bml.mainSplay, shape.index );
         this._stringToSplay( bml.splay3, shape.middle ); // not affected by mainsplay, otherwise it feels weird
-        this._stringToSplay( bml.splay4 ? bml.splay4 : bml.mainSplay, shape.ring );
-        this._stringToSplay( bml.splay5 ? bml.splay5 : bml.mainSplay, shape.pinky );
+        this._stringToSplay( bml.splay4 ?? bml.mainSplay, shape.ring );
+        this._stringToSplay( bml.splay5 ?? bml.mainSplay, shape.pinky );
 
 
         this.trgG.copy( shape );

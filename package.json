@@ -1,5 +1,5 @@
 {
-    "name": "ebmlcontroller",
+    "name": "@upf-gti/ebmlcontroller",
     "version": "0.1.1",
     "description": "JS library to drive virtual avatars with text instructions",
     "type": "module",
@@ -26,7 +26,7 @@
         "avatar",
         "three.js"
     ],
-    "author": "japopra",
+    "author": "@upf-gti",
     "license": "Apache-2.0",
     "bugs": {
         "url": "https://github.com/upf-gti/eBMLController/issues"

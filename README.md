@@ -2,7 +2,7 @@
 # eBMLController
 Javascript library to drive avatars using an extended version of BML.
 
-This library is powering the scripting animations of [Animics](https://animics.gti.upf.edu) and [Performs](https://performs.gti.upf.edu)
+This library is powering the scripting animations of [Animics](https://github.com/upf-gti/animics/) and [Performs](https://github.com/upf-gti/performs/)
 
 ## 🛠️ Technologies Used
   - [Three.js](https://github.com/mrdoob/three.js/) - An open-source JavaScript library for creating interactive 3D and 2D graphics in web browsers using WebGL.

@@ -1,4 +1,5 @@
-// This is a generated file. Do not edit.
+// This is a generated file. Do not edit. 
+ // Developers: @japopra @evallsg @gerardllorach @carolinadcf
 import * as THREE from 'three';
 
 /**
@@ -247,7 +248,6 @@ class BehaviourPlanner{
     
   }
   
-  //!!!!!!!!!!!!!!!!!!
   /*abortSpeech(){
     // Cancel audio and lipsync in Facial
     if (BehaviourPlanner.Facial){
