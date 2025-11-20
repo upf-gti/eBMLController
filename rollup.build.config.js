@@ -2,7 +2,7 @@ import terser from '@rollup/plugin-terser';
 
 export default [
     {
-        input: "src/index.controllers.js",
+        input: "rollup.build.index.js",
         output: [
             {
                 file: 'build/eBMLController.module.js',

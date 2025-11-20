@@ -7,6 +7,8 @@
 // Warnings and feedback
 // wait, synchronize, constraints, before, after
 
+import { EBMLC } from "./Core.js";
+
 class BehaviourManager{
 	
 	constructor() {
@@ -608,5 +610,7 @@ class BehaviourManager{
 		}
 	}
 }
+
+EBMLC.BehaviourManager = BehaviourManager;
 
 export { BehaviourManager }

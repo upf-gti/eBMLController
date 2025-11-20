@@ -1,6 +1,7 @@
 //@BehaviourPlanner
 //Agent's communicative intentions specified using BML standard
 
+import { EBMLC } from "./Core.js";
 
 class BehaviourPlanner{
   //States
@@ -66,22 +67,22 @@ class BehaviourPlanner{
     if (nextState == this.state)
       return;
     
-    var currentState = "waiting";
+    // var currentState = "waiting";
     
-    switch(this.state){
-      case BehaviourPlanner.WAITING:
-        currentState = "waiting";
-        break;
-      case BehaviourPlanner.LISTENING:
-        currentState = "listening";
-        break;
-        case BehaviourPlanner.SPEAKING:
-        currentState = "speaking";
-        break;
-        case BehaviourPlanner.PROCESSING:
-        currentState = "processing";
-        break;
-    }
+    // switch(this.state){
+    //   case BehaviourPlanner.WAITING:
+    //     currentState = "waiting";
+    //     break;
+    //   case BehaviourPlanner.LISTENING:
+    //     currentState = "listening";
+    //     break;
+    //     case BehaviourPlanner.SPEAKING:
+    //     currentState = "speaking";
+    //     break;
+    //     case BehaviourPlanner.PROCESSING:
+    //     currentState = "processing";
+    //     break;
+    // }
     
   
     // Reset state time
@@ -559,5 +560,7 @@ class BehaviourPlanner{
   // Add a pause between speeches
   //addUtterancePause (bmlLG){}
 }
+
+EBMLC.BehaviourPlanner = BehaviourPlanner;
 
 export { BehaviourPlanner }
