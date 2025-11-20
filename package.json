@@ -1,6 +1,6 @@
 {
     "name": "@upf-gti/ebmlcontroller",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "JS library to drive virtual avatars with text instructions",
     "type": "module",
     "main": "./build/eBMLController.module.min.js",
