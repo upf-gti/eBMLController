@@ -40,12 +40,31 @@ function nlerpQuats( destQuat, qa, qb, t ){
     destQuat.normalize();
 }
 
+// decompose a quaternion into twist and swing quaternions. (Twist before swing decomposition). Arguments cannot be the same instance of quaternion
+function getTwistSwingQuaternions( q, normAxis, outTwist, outSwing ){
+    //  R = [ Wr, Vr ] = S * T  source rotation
+    // T = norm( [ Wr, proj(Vr) ] ) twist 
+    // S = R * inv(T)
+    let dot =  q.x * normAxis.x + q.y * normAxis.y + q.z * normAxis.z;
+    outTwist.set( dot * normAxis.x, dot * normAxis.y, dot * normAxis.z, q.w );
+    outTwist.normalize(); // already manages (0,0,0,0) quaternions by setting identity
+
+    outSwing.copy( outTwist );
+    outSwing.invert(); // actually computes the conjugate so quite cheap
+    outSwing.premultiply( q );
+    outSwing.normalize();
+}
+
+EBMLC.getTwistSwingQuaternions = getTwistSwingQuaternions;
+
 function getTwistQuaternion( q, normAxis, outTwist ){
     let dot =  q.x * normAxis.x + q.y * normAxis.y + q.z * normAxis.z;
     outTwist.set( dot * normAxis.x, dot * normAxis.y, dot * normAxis.z, q.w );
     outTwist.normalize(); // already manages (0,0,0,0) quaternions by setting identity
     return outTwist;
 }
+
+EBMLC.getTwistQuaternion = getTwistQuaternion;
 
 // symmetry bit0 = left-right, bit1 = up-down, bit2 = in-out symmetry
 function stringToDirection( str, outV, symmetry = 0x00, accumulate = false ){
@@ -85,6 +104,8 @@ function findIndexOfBone( skeleton, bone ){
     return -1;
 }
 
+EBMLC.findIndexOfBone = findIndexOfBone;
+
 // O(nm)
 function findIndexOfBoneByName( skeleton, name ){
     if ( !name ){ return -1; }
@@ -94,6 +115,8 @@ function findIndexOfBoneByName( skeleton, name ){
     }
     return -1;
 }
+
+EBMLC.findIndexOfBoneByName = findIndexOfBoneByName;
 
 function getBindQuaternion( skeleton, boneIdx, outQuat ){
     let m1 = skeleton.boneInverses[ boneIdx ].clone().invert(); 
@@ -105,6 +128,8 @@ function getBindQuaternion( skeleton, boneIdx, outQuat ){
     outQuat.setFromRotationMatrix( m1 ).normalize();
     return outQuat;
 }
+
+EBMLC.getBindQuaternion = getBindQuaternion;
 
 // sets bind quaternions only. Warning: Not the best function to call every frame.
 function forceBindPoseQuats( skeleton, skipRoot = false ){
@@ -129,6 +154,8 @@ function forceBindPoseQuats( skeleton, skipRoot = false ){
         bones[i].quaternion.normalize(); 
     }
 }
+
+EBMLC.forceBindPoseQuats = forceBindPoseQuats;
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
