@@ -18,8 +18,13 @@ export default [
         ]
     },
     {
-        input: "build/extensions/SigmlToBML.js",
+        input: "src/extensions/SigmlToBML.js",
         output: [
+            {
+                file: 'build/extensions/SigmlToBML.js',
+                format: 'esm',
+                banner: '// This is a generated file. Do not edit. \n // Developers: @japopra',
+            },
             {
                 file: 'build/extensions/SigmlToBML.min.js',
                 format: 'esm',

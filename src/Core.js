@@ -5,7 +5,7 @@
 */
 
 const EBMLC = {
-    version: "0.1.2",
+    version: "1.3.0",
     extensions: []
 };
 

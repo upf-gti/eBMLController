@@ -1,3 +1,5 @@
+// This is a generated file. Do not edit. 
+ // Developers: @japopra
 /*
     @japopra
     
@@ -27,7 +29,7 @@ const TIMESLOT ={
     REST: 0.3, // rest attributes of some motions
     RELAXEND: 0.5, // after the sign, the time it takes to return to neutral pose
     PEAKRELAX: 0.5, // after the last posture is executed, the time it stays in that pose (instead of moving the arm and immediately returning to neutral pose)
-}
+};
 
 function sigmlStringToBML( str, timeOffset = 0 ) {
     let parser = new DOMParser();
@@ -42,15 +44,14 @@ function sigmlStringToBML( str, timeOffset = 0 ) {
         return { data: [], duration: 0, relaxEndDuration: 0 };
     }
 
-    let lastRelaxEndDuration = 0
+    let lastRelaxEndDuration = 0;
     let lastPeakRelaxDuration = 0;
-    let isFirstValidSign = true;
     // for each hamnosis sign
     for( let i = 0; i < xmlDoc.children.length ; ++i ){
         if( xmlDoc.children[i].tagName != "hns_sign" && xmlDoc.children[i].tagName != "hamgestural_sign" ){ continue; }
         
         time = time - lastRelaxEndDuration - lastPeakRelaxDuration + 0.2; // if not last, remove relax-end stage and partially remove the peak-relax 
-        if( isFirstValidSign ){ time -= 0.2; }
+        { time -= 0.2; }
         let result = hnsSignParser( xmlDoc.children[i], time );
         time = result.end;
         msg = msg.concat( result.data );
@@ -69,7 +70,7 @@ function hnsSignParser( xml, start ){
     let peakRelaxDuration = 0;
 
     // parse xml attributes
-    let attributes = {}
+    let attributes = {};
     for( let attr = 0; attr < xml.attributes.length; ++attr ){
         attributes[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
@@ -164,7 +165,7 @@ function checkHandsUsage( orders ){
 
         result[ hand ] = handResult;
         if ( hand == "RIGHT" ){ hand = "LEFT"; }
-        else{ break; }
+        else { break; }
     }
 
     return result;
@@ -189,7 +190,7 @@ function currentPostureUpdate( oldPosture, newOrders, overwrite = false ){
                 { type: "gesture", start: -1, handshape: "FLAT", hand: "LEFT" }, 
             ],
             handConstellation: null,
-        }
+        };
     }
     else if ( overwrite ){ newPosture = oldPosture; }
     else { newPosture = JSON.parse( JSON.stringify( oldPosture ) ); }
@@ -229,7 +230,7 @@ function currentPostureUpdate( oldPosture, newOrders, overwrite = false ){
         }
 
         if ( hand == "RIGHT" ){ hand = "LEFT"; }
-        else{ break; }
+        else { break; }
     }
 
 
@@ -244,7 +245,7 @@ function signManual( xml, start, signSpeed ){
     if ( !actions.length ){ return { data: [], end: start, peakRelaxDuration: 0, relaxEndDuration: 0 }; }
 
     // parse xml attributes
-    let attributes = {}
+    let attributes = {};
     for( let attr = 0; attr < xml.attributes.length; ++attr ){
         attributes[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
@@ -418,7 +419,7 @@ function postureParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, 
                 handConstellation.srcLocation = nonDomChild.location;
                 handConstellation.srcSide = nonDomChild.side;
                 handConstellation.srcFinger = nonDomChild.finger;
-            }else{ // only one child is location_hand
+            }else { // only one child is location_hand
                 let filledChild = domChild ? domChild : nonDomChild;
                 handConstellation.hand = domChild ? signGeneralInfo.domHand : signGeneralInfo.nonDomHand;
 
@@ -443,7 +444,7 @@ function postureParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, 
 
     } 
     else if ( tagName == "location_hand" ){
-        result = result.concat( locationHandAsHandConstellationParser( xml, time, time + TIMESLOT.LOC / signSpeed, hand, signGeneralInfo, currentPosture ) );
+        result = result.concat( locationHandAsHandConstellationParser( xml, time, time + TIMESLOT.LOC / signSpeed, hand) );
         if ( result.length > 0 ){ maxEnd = TIMESLOT.LOC / signSpeed; }
     }
 
@@ -451,7 +452,7 @@ function postureParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, 
 }
 // in JaSigning the handconfig lasts until the end of the sign/gloss or until another instruction overwrites it
 function handconfigParser( xml, start, attackPeak, hand, symmetry, signGeneralInfo ){
-    let attributes = {}
+    let attributes = {};
     for( let attr = 0; attr < xml.attributes.length; ++attr ){
         attributes[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
@@ -468,12 +469,10 @@ function handconfigParser( xml, start, attackPeak, hand, symmetry, signGeneralIn
         switch( attributes.ceeopening ){ 
             case "slack": obj.tco = 0.4; break;
             case "tight": obj.tco = -0.4; break;
-            default: break;
         }
         switch( attributes.second_ceeopening ){ 
             case "slack": obj.secondtco = 0.4; break;
             case "tight": obj.secondtco = -0.4; break;
-            default: break;
         }
         if ( attributes.bend1 ){ obj.bend1 = attributes.bend1.toUpperCase().replace("HALF", "HALF_").replace("DBL", "DOUBLE_"); }
         if ( attributes.bend2 ){ obj.bend2 = attributes.bend2.toUpperCase().replace("HALF", "HALF_").replace("DBL", "DOUBLE_"); }
@@ -499,10 +498,10 @@ function handconfigParser( xml, start, attackPeak, hand, symmetry, signGeneralIn
         if ( !attributes.palmor.match( /[l,r,u,d]/g ) ){ 
             if ( attributes.second_palmor && attributes.second_palmor.match( /[l,r,u,d]/g) ){ 
                 obj.palmor = attributes.second_palmor;
-            }else{
+            }else {
                 obj.palmor = "dlll";
             }
-        }else{
+        }else {
             obj.palmor = attributes.palmor;
             if ( attributes.second_palmor ){ obj.secondPalmor = attributes.second_palmor; }
         }
@@ -538,7 +537,7 @@ let locationMapHead = {
     lowerteeth: "MOUTH",
     chin: "CHIN",
     underchin: "UNDER_CHIN",
-}
+};
 let locationMapBody = {
     headtop: "HEAD_TOP",
     head: "HEAD", 
@@ -548,13 +547,12 @@ let locationMapBody = {
     chest: "CHEST",
     stomach: "STOMACH",
     belowstomach: "BELOW_STOMACH",
-}
+};
 let locationMap ={};
 for( let l in locationMapHead ){ locationMap[l] = locationMapHead[l]; }
 for( let l in locationMapBody ){ locationMap[l] = locationMapBody[l]; }
 
 let locationHand_ArmTable = [ "upperarm", "elbow", "elbowinside", "lowerarm" ];
-let locationHand_FingerpartTable = [ "tip", "nail", "pad", "midjoint", "base", "side" ];
 let locationHand_HandpartTable = [ "wristback", "thumbball", "palm", "handback", "thumbside", "pinkyside" ];
 
 // in JaSigning the location lasts until the end of the sign/gloss or until another instruction overwrites it
@@ -577,7 +575,7 @@ function locationBodyArmParser( xml, start, attackPeak, hand, symmetry, signGene
     else { 
         if ( locationMapHead[ attributes.location ] ){ attributes.contact = "touch"; } // need this later for srcContact
         if ( attributes.contact == "touch" ){ result.distance = 0.0; }
-        else{ result.distance = 0.4; } 
+        else { result.distance = 0.4; } 
     } // jasigning has a default unmentioned distance...
 
     // jasigning might accept some arm locations in the body location instruction. Transform it into a handconstellation
@@ -627,7 +625,7 @@ function locationBodyArmParser( xml, start, attackPeak, hand, symmetry, signGene
     if ( xml.children.length > 0 && xml.children[0].tagName == "location_hand" ){
         locationHand = locationHandInfoExtract( xml.children[0], false );
         if ( !( locationHand.finger || locationHand.side || locationHand.location ) ){ locationHand = null; } // go to default settings, as if no location hand was present
-        else{
+        else {
             if ( locationHand.location ){ result.srcLocation = locationHand.location; }
             if ( locationHand.side ){ result.srcSide = locationHand.side; }
             if ( locationHand.finger ){ result.srcFinger = locationHand.finger; }
@@ -648,7 +646,7 @@ function locationBodyArmParser( xml, start, attackPeak, hand, symmetry, signGene
                 result.srcFinger = "2";
             }
             result.srcLocation = "TIP";
-        }else{
+        }else {
             result.srcLocation = "HAND";
             result.srcSide = "PALMAR";
         }
@@ -774,7 +772,7 @@ function locationHandInfoExtract( xml, parseChildren = true ){
             if ( location ){ result.secondLocation = location; }
             if ( side ){ result.secondSide = side; }
         }
-        else{
+        else {
             if ( digit ){ result.finger = digit; }
             if ( location ){ result.location = location; }
             if ( side ){ result.side = side; }
@@ -816,7 +814,7 @@ function locationHandAsHandConstellationParser( xml, start, attackPeak, hand, si
         if ( locationHand.child.secondLocation ){ result.secondSrcLocation = locationHand.child.secondLocation; }
         if ( locationHand.child.secondSide ){ result.secondSrcSide = locationHand.child.secondSide; }
         if ( locationHand.child.secondFinger ){ result.secondSrcFinger = locationHand.child.secondFinger; }
-    }else{
+    }else {
         result.srcLocation = "tip";
         result.srcFinger = "1";
     }
@@ -846,7 +844,7 @@ function handConstellationParser( xml, start, attackPeak, hand, signGeneralInfo,
         if ( child.tagName == "location_bodyarm" ){
             locBodyArm = locationBodyArmParser( child, start - 0.0000001, attackPeak, "BOTH", 0x00, signGeneralInfo, currentPosture );
             if ( locBodyArm && locBodyArm.length > 0 ){ locBodyArm = locBodyArm[0]; }
-            else{ locBodyArm = null; }
+            else { locBodyArm = null; }
             break;
         }else if ( child.tagName == "location_hand" ){
             let locationHand = locationHandInfoExtract( child, false );
@@ -858,7 +856,7 @@ function handConstellationParser( xml, start, attackPeak, hand, signGeneralInfo,
                 if ( locationHand.secondSide ){ result.secondDstSide = locationHand.secondSide; }
                 if ( locationHand.secondFinger ){ result.secondDstFinger = locationHand.secondFinger; }
                 locationHandCount++;
-            }else{
+            }else {
                 if ( locationHand.location ){ result.srcLocation = locationHand.location; }
                 if ( locationHand.side ){ result.srcSide = locationHand.side; }
                 if ( locationHand.finger ){ result.srcFinger = locationHand.finger; }
@@ -869,7 +867,7 @@ function handConstellationParser( xml, start, attackPeak, hand, signGeneralInfo,
             }
             continue;
         }
-        else{
+        else {
             break;
         }
     }
@@ -898,7 +896,7 @@ function handConstellationParser( xml, start, attackPeak, hand, signGeneralInfo,
             if ( currentPosture.handConstellation.dstLocation ){ result.dstLocation = currentPosture.handConstellation.dstLocation; }
             if ( currentPosture.handConstellation.dstSide ){ result.dstSide = currentPosture.handConstellation.dstSide; }
             if ( currentPosture.handConstellation.dstFinger ){ result.dstFinger = currentPosture.handConstellation.dstFinger; }
-        }else{
+        }else {
             // "wachten" sign needs these
             result.dstLocation = "TIP"; 
             result.dstFinger = "1";
@@ -909,7 +907,7 @@ function handConstellationParser( xml, start, attackPeak, hand, signGeneralInfo,
             if ( currentPosture.handConstellation.srcLocation ){ result.srcLocation = currentPosture.handConstellation.srcLocation; }
             if ( currentPosture.handConstellation.srcSide ){ result.srcSide = currentPosture.handConstellation.srcSide; }
             if ( currentPosture.handConstellation.srcFinger ){ result.srcFinger = currentPosture.handConstellation.srcFinger; }
-        }else{
+        }else {
             // "wachten" sign needs these
             result.srcLocation = "TIP";
             result.srcFinger = "1";
@@ -1127,12 +1125,12 @@ function motionParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, c
                                 fwdInstr.relax = startTime + ( loop + 1 ) * loopDuration; // force fingerplay/wrist until end of loop
                                 fwdInstr.end = startTime + ( loop + 1 ) * loopDuration + TIMESLOT.POSTURE / signSpeed; // to avoid floating problems. It will be overwritten by the following fingerplay/wrist
                             } // force fingerplay/wrist until end of loop
-                            else{
+                            else {
                                 // unspecified "relax" and "end" should be all synchronized to the end of their loop iteration
                                 if( typeof( fwdInstr.relax ) == "number" ){ fwdInstr.relax += loop * loopDuration; } 
                                 else if( !ignoreNewRelax ) { fwdInstr.relax = startTime + loop * loopDuration + blockDuration; } // fingerplay and wrist compute relax at the end of sign_manual parser
                                 if( typeof( fwdInstr.end ) == "number" ){ fwdInstr.end += loop * loopDuration; }
-                                else{ fwdInstr.end = startTime + ( loop + 1 ) * loopDuration; }
+                                else { fwdInstr.end = startTime + ( loop + 1 ) * loopDuration; }
                             }
                         }
                         result = result.concat( forward );
@@ -1169,7 +1167,7 @@ function motionParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, c
                             }
                             result = result.concat( backward );
                             if ( backwardAddConstellation ){
-                                backward = JSON.parse( JSON.stringify( currentPosture.handConstellation ) )
+                                backward = JSON.parse( JSON.stringify( currentPosture.handConstellation ) );
                                 backward.start = time; 
                                 backward.attackpeak = time + TIMESLOT.POSTURE / signSpeed;
                                 result.push( backward );
@@ -1219,7 +1217,7 @@ function motionParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, c
 
     if ( attributes.rest == "true" ){ time += TIMESLOT.REST / signSpeed; }
 
-    return{ data: result, end: time }
+    return { data: result, end: time }
 }
 
 // necessary for nesting such in tgt and par
@@ -1241,7 +1239,7 @@ function remapBlockTiming ( srcStart, srcEnd, dstStart, dstEnd, bmlArray ){
 function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralInfo, currentPosture ){
     let resultArray = [];
     let duration = 0;
-    let attributes = {}
+    let attributes = {};
     for( let attr = 0; attr < xml.attributes.length; ++attr ){
         attributes[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
@@ -1253,7 +1251,7 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         result.direction = attributes.direction;
         if ( attributes.size == "big" ){ result.distance = 0.2; }
         else if( attributes.size == "small" ){ result.distance = 0.06; }
-        else{ result.distance = 0.12; }
+        else { result.distance = 0.12; }
 
         if ( attributes.second_direction ){
             result.seconDirection = attributes.second_direction;
@@ -1295,12 +1293,12 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         let endDirection = stringToDirection( attributes.end, null, symmetry );
 
         if ( startDirection[0]*startDirection[0] + startDirection[1]*startDirection[1] + startDirection[2]*startDirection[2] < 0.0000001 ) { result.startAngle = 0; }
-        else{ 
+        else { 
             result.startAngle = Math.atan2( startDirection[1], startDirection[0] ) * 180 / Math.PI;
             result.startAngle = result.startAngle < 0 ? ( 360 + result.startAngle ) : result.startAngle;     
         }
         if ( endDirection[0]*endDirection[0] + endDirection[1]*endDirection[1] + endDirection[2]*endDirection[2] < 0.0000001 ) { result.endAngle = result.startAngle + 360; }
-        else{ 
+        else { 
             result.endAngle = Math.atan2( endDirection[1], endDirection[0] ) * 180 / Math.PI; 
             result.endAngle = result.endAngle < 0 ? ( 360 + result.endAngle ) : result.endAngle;
         }
@@ -1309,7 +1307,7 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         if ( attributes.clockplus == "true" ){ clockplus++; }
         if ( attributes.second_clockplus == "true" ){ clockplus++; }
         if ( clockplus ){ 
-            let sign = ( result.endAngle - result.startAngle ) < -0.0001 ? -1 : 1;
+            let sign = ( result.endAngle - result.startAngle ) < -1e-4 ? -1 : 1;
             result.endAngle = result.endAngle + 360 * clockplus * sign;
         } 
         if ( typeof( result.direction ) == "string" && result.direction.includes( "i" ) ){
@@ -1335,7 +1333,6 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
             case "ur": result.ellipseAxisDirection = "ur"; result.ellipseAxisRatio = ellipseRatio; break;
             case "v": result.ellipseAxisDirection = "u"; result.ellipseAxisRatio = ellipseRatio; break;
             case "ul": result.ellipseAxisDirection = "ul"; result.ellipseAxisRatio = ellipseRatio; break;
-            default: break; // defaults to ellipseAxisRatio = 0.5
         }
 
         duration = (1+clockplus) * TIMESLOT.MOTIONCIRC / signSpeed;
@@ -1378,11 +1375,11 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         duration = TIMESLOT.MOTIONFINGERPLAY / signSpeed;
         result.end = start + duration;
         if ( attributes.digits ){ result.fingers = attributes.digits; }
-        else{
+        else {
             let h = hand == "BOTH" ? signGeneralInfo.domHand : hand;
             h = currentPosture[ h ][3].handshape;
             if( h.includes( "CEE" ) || h.includes( "PINCH" ) ){ result.fingers = "12345"; }
-            else{ result.fingers = "2345"; } // if too bent, fingers don't move
+            else { result.fingers = "2345"; } // if too bent, fingers don't move
         }
 
         resultArray.push( result );
@@ -1443,13 +1440,12 @@ function signNonManual( xml, start, signSpeed ){
             tier[0] = true; // flag tier as done
             let actions = xml.children[i].children;
             let time = start; // start after basic hand-arm positioning
-            let tierLasActions = [-1,-1];
             for( let a = 0; a < actions.length; ++a ){ // check all actions inside this tier
                 if ( tier[2].includes( actions[a].tagName ) ){ // simple sequential action ( jasigning )
                     let r = baseNMFActionToJSON( actions[a], time, signSpeed );
                     if ( !r || r.length < 1 ){ continue; }
-                    tierLasActions[0] = result.length;
-                    tierLasActions[1] = r.data.length;
+                    result.length;
+                    r.data.length;
                     result = result.concat( r.data );
                     time = r.end;
                 }
@@ -1478,7 +1474,7 @@ function signNonManual( xml, start, signSpeed ){
 
 function baseNMFActionToJSON( xml, startTime, signSpeed ){
     // parse attributes from array of xml objects into an object where key=tagName, value=xml.value
-    let obj = {}
+    let obj = {};
     for( let attr = 0; attr < xml.attributes.length; ++attr ){
         obj[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
@@ -1541,7 +1537,7 @@ function baseNMFActionToJSON( xml, startTime, signSpeed ){
                 let duration = o.end ? ( (startTime + o.end) - o.start) : o.duration;
                 o.end = o.start + duration / signSpeed; 
                 if ( o.end > maxEnd ){ maxEnd = o.end; } 
-            }else{  
+            }else {  
                 let repetition = o.repetition ? o.repetition : 0;
                 o.attackPeak = o.start + TIMESLOT.NMFSTARTPEAK / signSpeed  ;
                 o.relax = o.attackPeak + ( ( 1 + repetition ) * TIMESLOT.NMFWAIT ) / signSpeed;
@@ -1587,7 +1583,7 @@ let bodyMovementTable = {
     SI: { type: "gesture", bodyMovement: "TILT_BACKWARD", amount: 0.3 }, // _sigh  slightly tilted backwards
     // HE: { type: "gesture", bodyMovement: "HE", amount: 1 }, // _heave   does not work
     // ST: { type: "gesture", bodyMovement: "ST", amount: 1 }, // _straight 
-}
+};
 
 let headMovementTable = {
     NO: { type: "head", lexeme: "NOD", repetition: 1 }, //_nodding_up_and_down     
@@ -1857,6 +1853,6 @@ let mouthGestureTable = {
             { type: "faceLexeme", lexeme: "MOUTH_STRETCH",            amount: 0.2,   start: 0,   duration: 0.8 },
          ], //_lips_pursed_with_tip_of_tongue_protruding                  
     // T17: { type: "speech", text: "", sentInt: 0.3 }, //_mouth_open_tongue_protrudes_briefly
-}
+};
 
-export { sigmlStringToBML, TIMESLOT }
+export { TIMESLOT, sigmlStringToBML };
