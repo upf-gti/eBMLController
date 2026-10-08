@@ -4,6 +4,15 @@ Javascript library to drive avatars using an extended version of BML.
 
 This library is powering the scripting animations of [Animics](https://github.com/upf-gti/animics/) and [Performs](https://github.com/upf-gti/performs/)
 
+## Building
+The "build" folder will contain the last stable release of the library.
+
+If you need to rebuild it, run the following command from the root of the repository:
+```
+npm run build
+```
+Check the current version in the Core.js file in "src".
+
 ## 🛠️ Technologies Used
   - [Three.js](https://github.com/mrdoob/three.js/) - An open-source JavaScript library for creating interactive 3D and 2D graphics in web browsers using WebGL.
 
