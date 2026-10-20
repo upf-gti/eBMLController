@@ -6,7 +6,7 @@ import { GeometricArmIK } from "./GeometricArmIK.js";
 import { LocationBodyArm } from "./LocationBodyArm.js";
 import { HandShape } from "./HandShape.js"
 import { ExtfidirPalmor } from "./ExtfidirPalmor.js";
-import { CircularMotion, DirectedMotion, FingerPlay, WristMotion } from "./Motion.js";
+import { CircularMotion, DirectedMotion, FingerPlay, WristMotionManager } from "./Motion.js";
 import { HandConstellation } from "./HandConstellation.js";
 import { ElbowRaise, ShoulderRaise, ShoulderHunch, BodyMovement } from "./ElbowShouldersBodyNMF.js";
 
@@ -159,7 +159,7 @@ class BodyController{
             loc: new LocationBodyArm( this.config, this.skeleton, isLeftHand ),
             locMotions: [],
             extfidirPalmor: new ExtfidirPalmor( this.config, this.skeleton, isLeftHand ),
-            wristMotion: new WristMotion( this.config, this.skeleton, isLeftHand ),
+            wristMotion: new WristMotionManager( this.config, this.skeleton, isLeftHand ),
             handshape: new HandShape( this.config, this.skeleton, isLeftHand ),
             fingerplay: new FingerPlay(),
             elbowRaise: new ElbowRaise( this.config, this.skeleton, isLeftHand ),

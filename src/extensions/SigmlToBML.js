@@ -1363,8 +1363,11 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         result.mode = attributes.motion.toUpperCase().replace("STIR", "STIR_");
         result.speed = 4 * signSpeed;
 
+        if ( result.mode == "NOD"){ result.mode == "NODDING"; }
+        if ( result.mode == "SWING"){ result.mode == "SWINGING"; }
+        if ( result.mode == "TWIST"){ result.mode == "TWISTING"; }
         // non dominant hand always shows symmetry except on nodding
-        if ( result.mode != "nodding" && result.mode != "nod" ){ result.lrSym = true; }
+        if ( result.mode != "NODDING" && result.mode != "NOD" ){ result.lrSym = true; }
 
         duration = TIMESLOT.MOTIONWRIST / signSpeed;
         result.end = start + duration;
