@@ -1361,7 +1361,6 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         if ( attributes.size == "big" ){ result.intensity = 0.3; } 
         else { result.intensity = 0.1; }
         result.mode = attributes.motion.toUpperCase().replace("STIR", "STIR_");
-        result.speed = 4 * signSpeed;
 
         if ( result.mode == "NOD"){ result.mode == "NODDING"; }
         if ( result.mode == "SWING"){ result.mode == "SWINGING"; }
@@ -1371,6 +1370,8 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
 
         duration = TIMESLOT.MOTIONWRIST / signSpeed;
         result.end = start + duration;
+        result.cycles = duration * 4 * signSpeed; // duration * ( 4 oscillations per second * signSpeed factor)
+
         resultArray.push( result );
     }
     else if ( xml.tagName == "fingerplay" ){

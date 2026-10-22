@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { EBMLC } from "../Core.js";
-import { cubicBezierVec3, stringToDirection } from "../Utils.js";
+import { E_FLAG_SYMMETRY_ALL, E_FLAG_SYMMETRY_IO, E_FLAG_SYMMETRY_LR, E_FLAG_SYMMETRY_UD, E_FLAG_SYMMETRY_NONE, cubicBezierVec3, stringToDirection } from "../Utils.js";
 
 let _tempVec3_0 = new THREE.Vector3(0,0,0);
 let _tempVec3_1 = new THREE.Vector3(0,0,0);
@@ -457,7 +457,7 @@ const E_WRISTMOTION_MODE_NOD = 0x02;
 const E_WRISTMOTION_MODE_SWING = 0x04;
 
 class WristMotionThrowable{
-    constructor(){
+    constructor(isLeftHand = false){
         this.time = 0;
         this.start = 0;
         this.attackPeak = 0;
@@ -468,9 +468,10 @@ class WristMotionThrowable{
         this.intensity = 1;
         this.speed = 0; // if 0 do not repete
 
-        this.repDisplace = 0; // [0,1]
+        this.repDisplace = 0.5; // [0,1]
         this.repPhase = 0;
-        this.curValue = [0,0,0];
+        this.curValue = [0,0,0]; // [ twist, nod, swing]
+        this.isLeftHand = isLeftHand;
     }
     /**
     * bml info
@@ -480,24 +481,39 @@ class WristMotionThrowable{
     *          - or a value from [ 0 = None, 1 = TWIST, 2 = NOD, SWING = 4 ]. 
     *            Several values can co-occur by using the OR (|) operator. I.E. ( 2 | 4 ) = STIR_CW
     *            Several values can co-occur by summing the values. I.E. ( 2 + 4 ) = STIR_CW
-    * speed = (optional) oscillations per second. A negative values accepted. Default 3. 
+    * cycles = (optional) oscillations between end and start. Negative values are valid. Default 3. 
     * intensity = (optional) [0,1]. Default 0.3
     */
-    setBML( bml, symmetry ){        
-        this.speed = isNaN( bml.speed ) ? 3 : bml.speed;
-        if ( symmetry & 0x07 ){ this.speed *= -1; }
+    setBML( bml, symmetry ){
+        // check and set timings
+        this.start = bml.start;
+        this.attackPeak = bml.attackPeak;
+        this.relax = bml.relax;
+        this.end = bml.end;
+        this.time = 0; 
+
+        this.speed = (isNaN( bml.cycles ) ? 3 : bml.cycles) / (this.end-this.start + 0.000001);
+        if ( symmetry & E_FLAG_SYMMETRY_ALL ){ this.speed *= -1; }
         this.intensity = isNaN( bml.intensity ) ? 0.3 : bml.intensity;
-        // this.intensity = Math.min( 1, Math.max( 0, this.intensity ) );
         
         if ( typeof( bml.mode ) == "string" ){
             switch( bml.mode.toLowerCase() ){
-                case "twist": this.mode = E_WRISTMOTION_MODE_TWIST; this.speed = 0; break;
-                case "twisting": this.mode = E_WRISTMOTION_MODE_TWIST; break;
-                case "nod": this.mode = E_WRISTMOTION_MODE_NOD; this.speed = 0; break;
-                case "nodding": this.mode = E_WRISTMOTION_MODE_NOD; break;
-                case "swing": this.mode = E_WRISTMOTION_MODE_SWING; this.speed = 0; break;
-                case "swinging": this.mode = E_WRISTMOTION_MODE_SWING; break;
-                case "stir_cw": this.mode = E_WRISTMOTION_MODE_NOD | E_WRISTMOTION_MODE_SWING; break; // 0x02 | 0x04
+                case "twisting": this.mode = E_WRISTMOTION_MODE_TWIST; break; // repetition
+                case "twist": this.mode = E_WRISTMOTION_MODE_TWIST; this.speed = 0; this.intensity *= symmetry & E_FLAG_SYMMETRY_IO ? -1 : 1; break;
+                case "pronation" : this.mode = E_WRISTMOTION_MODE_TWIST; this.intensity *= this.isLeftHand ? 1 : -1; this.speed = 0; break;
+                case "supination" : this.mode = E_WRISTMOTION_MODE_TWIST; this.intensity *= this.isLeftHand ? -1 : 1; this.speed = 0; break;
+                
+                case "nodding": this.mode = E_WRISTMOTION_MODE_NOD; break; // reptition
+                case "nod": this.mode = E_WRISTMOTION_MODE_NOD; this.speed = 0; this.intensity *= symmetry & E_FLAG_SYMMETRY_UD ? -1 : 1; break
+                case "extension": this.mode = E_WRISTMOTION_MODE_NOD; this.intensity *= -1; this.speed = 0; break;
+                case "flexion": this.mode = E_WRISTMOTION_MODE_NOD; this.speed = 0; break;
+
+                case "swinging": this.mode = E_WRISTMOTION_MODE_SWING; break; // repetition
+                case "swing": this.mode = E_WRISTMOTION_MODE_SWING; this.intensity *= symmetry & E_FLAG_SYMMETRY_LR ? -1 : 1; this.speed = 0; break; // simple left right, regardless of hand
+                case "swing_ulnar" : this.mode = E_WRISTMOTION_MODE_SWING; this.intensity *= this.isLeftHand ? 1 : -1; this.speed = 0; break;
+                case "swing_radial" : this.mode = E_WRISTMOTION_MODE_SWING; this.intensity *= this.isLeftHand ? -1 : 1; this.speed = 0; break;
+
+                case "stir_cw": this.mode = E_WRISTMOTION_MODE_NOD | E_WRISTMOTION_MODE_SWING; break;
                 case "stir_ccw": this.mode = E_WRISTMOTION_MODE_NOD | E_WRISTMOTION_MODE_SWING; this.speed *= -1; break;
                 case "all": this.mode = E_WRISTMOTION_MODE_NOD | E_WRISTMOTION_MODE_SWING | E_WRISTMOTION_MODE_TWIST; break;
                 default:
@@ -510,18 +526,9 @@ class WristMotionThrowable{
             return false;
         }
         else {
-            this.mode = bml.mode & 0x07; // take only the necessary bits
+            this.mode = bml.mode & (E_WRISTMOTION_MODE_NOD | E_WRISTMOTION_MODE_SWING | E_WRISTMOTION_MODE_TWIST); // take only the necessary bits
         }
 
-        // check and set timings
-        this.start = bml.start;
-        this.attackPeak = bml.attackPeak;
-        this.relax = bml.relax;
-        this.end = bml.end;
-        this.time = 0; 
-
-        this.transition = true;
-        
         return true;
     
     }
@@ -536,30 +543,29 @@ class WristMotionThrowable{
         else {
             interpolator = 0; 
             this.mode = 0x00;
-            this.transition = false;
         }
         
         let val = interpolator * this.intensity * ( Math.PI * 0.5 );
 
-        if ( this.mode & E_WRISTMOTION_MODE_NOD){
-            this.curValue[1] = val;
-            if ( this.speed ){
-                let f = Math.cos( 2 * Math.PI * this.speed * this.time + this.repPhase );
-                this.curValue[1] *= this.repDisplace + (0.5 + 0.5 * f);
-            }
-        }
         if ( this.mode & E_WRISTMOTION_MODE_TWIST){
             this.curValue[0] = val;
             if ( this.speed ){
                 let f = Math.cos( 2 * Math.PI * this.speed * this.time + this.repPhase );
-                this.curValue[0] *= this.repDisplace + (0.5 + 0.5 * f);
+                this.curValue[0] *= (0.5 + 0.5 * f) - this.repDisplace;
+            }
+        }
+        if ( this.mode & E_WRISTMOTION_MODE_NOD){
+            this.curValue[1] = val;
+            if ( this.speed ){
+                let f = Math.cos( 2 * Math.PI * this.speed * this.time + this.repPhase );
+                this.curValue[1] *= (0.5 + 0.5 * f) - this.repDisplace;
             }
         }
         if ( this.mode & E_WRISTMOTION_MODE_SWING){
             this.curValue[2] = val;
             if ( this.speed ){
                 let f = Math.sin( 2 * Math.PI * this.speed * this.time + this.repPhase ); // swing should be offseted from nod
-                this.curValue[2] *= this.repDisplace + (0.5 + 0.5 * f);
+                this.curValue[2] *= (0.5 + 0.5 * f) - this.repDisplace;
             }
         }
     }
@@ -569,7 +575,7 @@ class WristMotionManager {
     constructor( config, skeleton, isLeftHand = false ){
         this.skeleton = skeleton;
         this.config = config;
-        
+        this.isLeftHand = isLeftHand;
       
         this.transition = false;
         this.bmlstack = [];
@@ -645,7 +651,7 @@ class WristMotionManager {
     }
 
     newGestureBML( bml, symmetry ){
-        let wm = new WristMotionThrowable();
+        let wm = new WristMotionThrowable(this.isLeftHand);
         if ( wm.setBML(bml, symmetry) ){
             this.bmlstack.push(wm);
             return true;

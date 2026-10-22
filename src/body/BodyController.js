@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { EBMLC } from "../Core";
-import { findIndexOfBoneByName, forceBindPoseQuats, getTwistQuaternion } from "../Utils.js";
+import { E_FLAG_SYMMETRY_NONE, E_FLAG_SYMMETRY_LR, E_FLAG_SYMMETRY_UD, E_FLAG_SYMMETRY_IO, findIndexOfBoneByName, forceBindPoseQuats, getTwistQuaternion } from "../Utils.js";
 
 import { GeometricArmIK } from "./GeometricArmIK.js";
 import { LocationBodyArm } from "./LocationBodyArm.js";
@@ -88,8 +88,7 @@ class BodyController{
                     m3.setFromMatrix4( skeleton.boneInverses[ idx ] );
                     o.direction = (new THREE.Vector3()).copy( l[2] ).applyMatrix3( m3 );
                 }
-                // o.position.copy( l[1] );
-                // if ( symmetry ){ o.position.x *= -1; }
+                
                 o.name = name;
                 skeleton.bones[ idx ].add( o );
                 result[ name ] = o;
@@ -357,7 +356,7 @@ class BodyController{
         wq.premultiply( q0.invert() ); // wrist did not know about this twist, undo it
     }
 
-    _newGestureArm( bml, arm, symmetry = 0x00 ){
+    _newGestureArm( bml, arm, symmetry = E_FLAG_SYMMETRY_NONE ){
         if ( bml.locationBodyArm ){ // when location change, cut directed and circular motions
             // this.bodyMovement.forceBindPose();
             arm.loc.newGestureBML( bml, symmetry, arm.locUpdatePoint );
@@ -411,9 +410,9 @@ class BodyController{
         bml.relax = bml.relax || ( (bml.end - bml.attackPeak) * 0.5 + bml.attackPeak );
 
         // symmetry: bit0 = lr, bit1 = ud, bit2 = io
-        let symmetryFlags = ( !!bml.lrSym );
-        symmetryFlags |= ( ( !!bml.udSym ) << 1 );
-        symmetryFlags |= ( ( !!bml.ioSym ) << 2 );
+        let symmetryFlags = bml.lrSym ? E_FLAG_SYMMETRY_LR : E_FLAG_SYMMETRY_NONE;
+        if (bml.udSym) { symmetryFlags |= E_FLAG_SYMMETRY_UD; }
+        if (bml.ioSym) { symmetryFlags |= E_FLAG_SYMMETRY_IO; }
 
         if ( typeof( bml.hand ) == "string" ){ bml.hand = bml.hand.toUpperCase(); }
         
@@ -437,13 +436,13 @@ class BodyController{
 
         switch ( bml.hand ){
             case "RIGHT" :             
-                this._newGestureArm( bml, this.right, ( this.dominant == this.right ) ? 0x00 : symmetryFlags ); 
+                this._newGestureArm( bml, this.right, ( this.dominant == this.right ) ? E_FLAG_SYMMETRY_NONE : symmetryFlags ); 
                 break;
             case "LEFT" : 
-                this._newGestureArm( bml, this.left, ( this.dominant == this.left ) ? 0x00 : symmetryFlags ); 
+                this._newGestureArm( bml, this.left, ( this.dominant == this.left ) ? E_FLAG_SYMMETRY_NONE : symmetryFlags ); 
                 break;
             case "BOTH" : 
-                this._newGestureArm( bml, this.dominant, 0x00 ); 
+                this._newGestureArm( bml, this.dominant, E_FLAG_SYMMETRY_NONE ); 
                 this._newGestureArm( bml, this.nonDominant, symmetryFlags ); 
                 break;
             case "NON_DOMINANT" : 
@@ -451,7 +450,7 @@ class BodyController{
                 break;
             case "DOMINANT": 
             default:
-                this._newGestureArm( bml, this.dominant, 0x00 ); 
+                this._newGestureArm( bml, this.dominant, E_FLAG_SYMMETRY_NONE ); 
                 break;
         }
 

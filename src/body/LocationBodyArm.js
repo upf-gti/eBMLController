@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { EBMLC } from "../Core.js";
-import { stringToDirection } from '../Utils.js';
+import { E_FLAG_SYMMETRY_NONE, stringToDirection } from '../Utils.js';
 
 class LocationBodyArm {
     constructor( config, skeleton, isLeftHand = false ) {
@@ -139,12 +139,6 @@ class LocationBodyArm {
     _newGestureLocationComposer( bml, symmetry, resultPos, isSecond = false ){
         let location = isSecond ? bml.secondLocationBodyArm : bml.locationBodyArm;
 
-        // Symmetry should be only for sides
-        // for symmetry - the left and right must be swapped
-        // if ( ( symmetry & 0x01 ) && location ){ 
-        //     if ( location[location.length-1] == "L" ){ location = location.slice(0, location.length-1) + "R"; } 
-        //     else if( location[location.length-1] == "R" ){ location = location.slice(0, location.length-1) + "L"; } 
-        // }
         if ( typeof( location ) != "string" ){ return false; }
         location = location.toUpperCase();
 
@@ -213,7 +207,7 @@ class LocationBodyArm {
      *                       set to true; contact tip of index; reach destination. Afterwards, changing index finger state (handshape) will make the location change depending on where the tip of the index is  
      * shift does not use contact locations
      */
-    newGestureBML( bml, symmetry = 0x00, lastFrameWorldPosition = null ) {
+    newGestureBML( bml, symmetry = E_FLAG_SYMMETRY_NONE, lastFrameWorldPosition = null ) {
         this.keepUpdatingContact = !!bml.keepUpdatingContact;
         this.contactUpdateDone = false;
 

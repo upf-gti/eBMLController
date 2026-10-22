@@ -705,17 +705,22 @@ Repetitive swinging, nodding and twisting of wrist (wiggle for the wrist).
     "end": 0.4,
     
     "motion": "WRIST",
-    "mode": "NOD",
-    /* either a: 
-        - string from [ "NOD", "SWING", "TWIST", "STIR_CW", "STIR_CCW", "ALL" ]
+    "mode": "NODDING",
+    /* either a:
+        - Oscillatory movement: string from ["NODDING", "SWINGING", "TWISTING", "STIR_CW", "STIR_CCW", "ALL"]. Attribute "cycles" apply
+        - Non-oscillatory movement: string from [ 
+            "NOD", "EXTENSION", "FLEXION",
+            "SWING", "SWING_ULNAR", "SWING_RADIAL",
+            "TWIST", "PRONATION", "SUPINATION"
+        ]
         - or a value from [ 0 = None, 1 = TWIST, 2 = NOD, SWING = 4 ]. 
     Several values can co-occur by using the OR (|) operator. I.E. ( 2 | 4 ) = STIR_CW
     Several values can co-occur by summing the values. I.E. ( 2 + 4 ) = STIR_CW
     */
 
     // optionals
-    "speed": 3, // oscillations per second. Negative values accepted. Default 3. 
-    "intensity": 0.3, // [0,1]. Default 0.3
+    "cycles": 3, // oscillations from start to end. Accepts negative values. Default 3. 
+    "intensity": 0.3, // [0,1] where 1 = 90 degrees. Default 0.3.
 }
 ```
 

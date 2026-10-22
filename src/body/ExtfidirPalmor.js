@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { EBMLC } from "../Core.js";
-import { stringToDirection, nlerpQuats, getBindQuaternion } from "../Utils.js";
+import { stringToDirection, nlerpQuats, getBindQuaternion, E_FLAG_SYMMETRY_NONE, E_FLAG_SYMMETRY_LR } from "../Utils.js";
 
 class ExtfidirPalmor { 
     constructor( config, skeleton, isLeftHand = false ){
@@ -166,7 +166,7 @@ class ExtfidirPalmor {
      * extfidir: string from sides
      * secondExtfidir: (optional) string from sides. Will compute midpoint between extifidir and secondExtfidir
     */
-    newGestureBMLExtfidir( bml, symmetry = false ){
+    newGestureBMLExtfidir( bml, symmetry = E_FLAG_SYMMETRY_NONE ){
         if( !bml.extfidir ){ return; }
         
         if( !stringToDirection( bml.extfidir, this.extfidir.trgDir, symmetry, true ) ){ 
@@ -192,7 +192,7 @@ class ExtfidirPalmor {
      * palmor: string from palmorRightTable
      * secondPalmor: (optional)
     */
-    newGestureBMLPalmor( bml, symmetry = 0x00 ){
+    newGestureBMLPalmor( bml, symmetry = E_FLAG_SYMMETRY_NONE ){
         if( !bml.palmor ){ return; }
 
         // TODO (?): solve atan2(0,-0) == up    
@@ -225,7 +225,7 @@ class ExtfidirPalmor {
         return true;
     }
 
-    newGestureBML( bml, symmetry = 0x00 ){
+    newGestureBML( bml, symmetry = E_FLAG_SYMMETRY_NONE ){
 
         this.srcQuat.copy( this.curQuat );
         this.palmor.srcAngle = this.curAproxPalmor;
@@ -234,7 +234,9 @@ class ExtfidirPalmor {
             if ( this.time > this.relax ){ this.extfidir.trgDir.copy( this.extfidir.defDir ); }
             // this.extfidir.trgDir.copy( this.extfidir.defDir );
         }
-        symmetry = (symmetry & 0xfe) | ( ( symmetry & 0x01 ) ^ ( this.extfidir.trgDir.z < 0 ? 0x01 : 0x00 ) );
+
+        // symmetry lr. If direction is inwards, undo any symmetry
+        symmetry = (symmetry & (~E_FLAG_SYMMETRY_LR)) | ( ( symmetry & E_FLAG_SYMMETRY_LR ) ^ ( this.extfidir.trgDir.z < 0 ? E_FLAG_SYMMETRY_LR : 0x00 ) );
         if ( !this.newGestureBMLPalmor( bml, symmetry ) ){
             if ( this.time > this.relax ){ this.palmor.trgAngle = this.palmor.defAngle; }
             // this.palmor.trgAngle = this.palmor.defAngle;

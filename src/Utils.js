@@ -82,8 +82,13 @@ function getTwistQuaternion( q, normAxis, outTwist ){
 
 EBMLC.getTwistQuaternion = getTwistQuaternion;
 
+const E_FLAG_SYMMETRY_NONE = 0x00;
+const E_FLAG_SYMMETRY_LR = 0x01;
+const E_FLAG_SYMMETRY_UD = 0x02;
+const E_FLAG_SYMMETRY_IO = 0x04;
+const E_FLAG_SYMMETRY_ALL = E_FLAG_SYMMETRY_LR | E_FLAG_SYMMETRY_UD | E_FLAG_SYMMETRY_IO;
 // symmetry bit0 = left-right, bit1 = up-down, bit2 = in-out symmetry
-function stringToDirection( str, outV, symmetry = 0x00, accumulate = false ){
+function stringToDirection( str, outV, symmetry = E_FLAG_SYMMETRY_NONE, accumulate = false ){
     outV.set(0,0,0);
     if ( typeof( str ) != "string" ){ return false; }
 
@@ -98,9 +103,9 @@ function stringToDirection( str, outV, symmetry = 0x00, accumulate = false ){
     if ( str.includes( "O" ) ){ outV.z += 1 * ( accumulate ? ( str.split("O").length -1 ): 1 ); success = true; } 
     if ( str.includes( "I" ) ){ outV.z -= 1 * ( accumulate ? ( str.split("I").length -1 ): 1 ); success = true; }
  
-    if ( symmetry & 0x01 ){ outV.x *= -1; }
-    if ( symmetry & 0x02 ){ outV.y *= -1; }
-    if ( symmetry & 0x04 ){ outV.z *= -1; }
+    if ( symmetry & E_FLAG_SYMMETRY_LR ){ outV.x *= -1; }
+    if ( symmetry & E_FLAG_SYMMETRY_UD ){ outV.y *= -1; }
+    if ( symmetry & E_FLAG_SYMMETRY_IO ){ outV.z *= -1; }
 
     if ( !success ){ outV.set(0,0,0); }
     else if ( !accumulate ){ outV.normalize(); }
@@ -177,4 +182,7 @@ const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 
 
-export { DEG2RAD, RAD2DEG, quadraticBezierVec3, cubicBezierVec3,  mirrorQuat, mirrorQuatSelf, nlerpQuats, getTwistSwingQuaternions, getTwistQuaternion, stringToDirection,  findIndexOfBone, findIndexOfBoneByName, getBindQuaternion, forceBindPoseQuats }
+export { DEG2RAD, RAD2DEG, 
+    quadraticBezierVec3, cubicBezierVec3,  mirrorQuat, mirrorQuatSelf, nlerpQuats, getTwistSwingQuaternions, getTwistQuaternion,
+    E_FLAG_SYMMETRY_NONE, E_FLAG_SYMMETRY_LR, E_FLAG_SYMMETRY_UD, E_FLAG_SYMMETRY_IO, E_FLAG_SYMMETRY_ALL, stringToDirection,
+    findIndexOfBone, findIndexOfBoneByName, getBindQuaternion, forceBindPoseQuats }
