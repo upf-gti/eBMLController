@@ -371,7 +371,13 @@ Moves the arm (wrist) to a location of the body (face + trunk).
                 // i.e.: set to false; contact tip of index; reach destination. Afterwards, changing index finger state will not modify the location
                 // i.e.: set to true; contact tip of index; reach destination. Afterwards, changing index finger state (handshape) will make the location change depending on where the tip of the index is  
 
-    "shift": false, // contact information ( srcFinger, srcLocation, srcSide ) is not kept for shift
+    "mode": "nt",  // possible values [ unspecified, "nt", "uc" ]
+        // unspecified (default behaviour): target points are recomputed and updated, following torso and head movements.
+        // "nt" (neutral): uses static points from the neutral pose of the avatar. Thus change the torso rotation does not modify the world target position.
+        // "uc" (update until contact): recomputes the target point until it reaches the attack peak. Afterwards, the point is locked in space.
+
+
+    "shift": false,
 
     "lrSym":false, // symmetry applied to sides and displace
     "udSym":false,

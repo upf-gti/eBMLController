@@ -168,8 +168,8 @@ class BodyController{
             needsUpdate: false,
             ikSolver: new GeometricArmIK( this.skeleton, this.config, isLeftHand ),
             locUpdatePoint: new THREE.Vector3(0,0,0),
-            _tempWristQuat: new THREE.Quaternion(0,0,0,1), // stores computed extfidir + palmor before any arm movement applied. Necessary for locBody + handConstellation
-
+            _wristBeforeFixQuat: new THREE.Quaternion(0,0,0,1), // stores computed extfidir + palmor before any arm movement applied. Necessary for locBody + handConstellation
+            _wristBeforeFixParentsQuat: new THREE.Quaternion(0,0,0,1)
         };
     }
 
@@ -186,7 +186,6 @@ class BodyController{
         arm.needsUpdate = false;
 
         arm.extfidirPalmor.reset();
-
     }
     
     reset(){
@@ -208,8 +207,8 @@ class BodyController{
         this.newGesture( { type: "gesture", start: 0, attackPeak: 0.1, relax:0.2, end: 0.3, handConstellation: true, hand: "right", srcContact: "2_mid_palmar", secondSrcContact: "2_pad_palmar", dstContact:"hand_ulnar" } );
 
         this.update( 0.15 );
-        this.left.loc.def.copy( this.left.locUpdatePoint ); // hack
-        this.right.loc.def.copy( this.right.locUpdatePoint ); // hack
+        this.left.loc.def.displace.copy( this.handConstellation.curOffsetL ); // hack
+        this.right.loc.def.displace.copy( this.handConstellation.curOffsetR ); // hack
         this.update( 1 );
     }
 
@@ -238,26 +237,27 @@ class BodyController{
         return computeFlag; 
     }
 
-    _updateArm( dt, arm ){
+    _updateHand( dt, arm ){
         let bones = this.skeleton.bones;
 
         // reset shoulder, arm, elbow. This way location body, motion and location hand can be safely computed
         bones[ arm.loc.idx.shoulder ].quaternion.set(0,0,0,1);
         bones[ arm.loc.idx.arm ].quaternion.set(0,0,0,1);
         bones[ arm.loc.idx.elbow ].quaternion.set(0,0,0,1);
-
+    
         // overwrite finger rotations
         arm.fingerplay.update(dt); // motion, prepare offsets
         arm.handshape.update( dt, arm.fingerplay.transition ? arm.fingerplay.curBends : null );
       
         // wrist point and twist
         arm.extfidirPalmor.update(dt);
+    
+        // wrist motion done in arm
+        // quat clones done in arm
 
-        // wristmotion. ADD rotation to wrist
-        arm.wristMotion.update(dt); // wrist - add rotation
+    }
 
-        // backup the current wrist quaternion, before any arm rotation is applied
-        arm._tempWristQuat.copy( arm.extfidirPalmor.wristBone.quaternion );
+    _updateArm( dt, arm ){
 
         // update arm posture world positions but do not commit results to the bones, yet.
         arm.loc.update( dt );
@@ -267,13 +267,37 @@ class BodyController{
         arm.shoulderRaise.update( dt );
         arm.shoulderHunch.update( dt );
 
+        // legacy, done here so if location is in update mode, the wrist behaves as before.
+        // TODO expose this as a parameter 
+        // wristmotion. ADD rotation to wrist
+        arm.wristMotion.update(dt); // wrist - add rotation
+        // backup the current wrist quaternion, before any arm rotation is applied. See fixquat function
+        {
+            let bones = this.skeleton.bones;
+
+            let b = bones[ arm.loc.idx.wrist ].parent;
+            arm._wristBeforeFixParentsQuat.set(0,0,0,1);
+            while( b.isBone && b != bones[ arm.loc.idx.shoulder ].parent ){
+                arm._wristBeforeFixParentsQuat.premultiply(b.quaternion);
+                b = b.parent;
+            }
+        }
+        arm._wristBeforeFixQuat.copy( arm.extfidirPalmor.wristBone.quaternion );
+
         arm.needsUpdate = motionsRequireUpdated | arm.fingerplay.transition | arm.handshape.transition | arm.wristMotion.transition | arm.extfidirPalmor.transition | arm.loc.transition | arm.elbowRaise.transition | arm.shoulderRaise.transition | arm.shoulderHunch.transition;
     }
 
     update( dt ){
-        if ( !this.bodyMovement.transition && !this.right.needsUpdate && !this.left.needsUpdate && !this.handConstellation.transition ){ return; }
+        if ( !this.bodyMovement.transition && !this.right.needsUpdate && !this.left.needsUpdate && !this.handConstellation.transition ){ 
+            return;
+        }
 
         this.bodyMovement.forceBindPose();
+
+        this._updateHand( dt, this.right );
+        this._updateHand( dt, this.left );
+
+        this.bodyMovement.update( dt );
 
         this._updateArm( dt, this.right );
         this._updateArm( dt, this.left );
@@ -283,9 +307,9 @@ class BodyController{
             // if only points in hand were used in handConstellation, the first ik could be removed. But forearm-elbow-upperarm locations require 2 iks
 
             // compute locBody and fix wrist quaternion (forearm twist correction should not be required. Disable it and do less computations)
-            // using loc.cur.p, without the loc.cur.offset. Compute handConstellation with raw locBody
-            this.right.ikSolver.reachTarget( this.right.loc.cur.p, this.right.elbowRaise.curValue, this.right.shoulderRaise.curValue, this.right.shoulderHunch.curValue, false ); //ik without aesthetics. Aesthetics might modify 
-            this.left.ikSolver.reachTarget( this.left.loc.cur.p, this.left.elbowRaise.curValue, this.left.shoulderRaise.curValue, this.left.shoulderHunch.curValue, false );
+            // using loc.cur without motions. Compute handConstellation with raw locBody
+            this.right.ikSolver.reachTarget( this.right.loc.cur, this.right.elbowRaise.curValue, this.right.shoulderRaise.curValue, this.right.shoulderHunch.curValue, false ); //ik without aesthetics. Aesthetics might modify 
+            this.left.ikSolver.reachTarget( this.left.loc.cur, this.left.elbowRaise.curValue, this.left.shoulderRaise.curValue, this.left.shoulderHunch.curValue, false );
             this._fixArmQuats( this.right, false );
             this._fixArmQuats( this.left, false );
 
@@ -296,18 +320,14 @@ class BodyController{
         }
 
         // if only location body and motions. Do only 1 ik per arm
-        this.right.locUpdatePoint.add( this.right.loc.cur.p );
-        this.right.locUpdatePoint.add( this.right.loc.cur.offset );
+        this.right.locUpdatePoint.add( this.right.loc.cur );
         this.right.ikSolver.reachTarget( this.right.locUpdatePoint, this.right.elbowRaise.curValue, this.right.shoulderRaise.curValue, this.right.shoulderHunch.curValue, true ); // ik + aesthetics
 
-        this.left.locUpdatePoint.add( this.left.loc.cur.p );
-        this.left.locUpdatePoint.add( this.left.loc.cur.offset );
+        this.left.locUpdatePoint.add( this.left.loc.cur );
         this.left.ikSolver.reachTarget( this.left.locUpdatePoint, this.left.elbowRaise.curValue, this.left.shoulderRaise.curValue, this.left.shoulderHunch.curValue, true ); // ik + aesthetics
     
         this._fixArmQuats( this.right, true );   
         this._fixArmQuats( this.left, true );  
-        
-        this.bodyMovement.update( dt );
     }
 
 
@@ -325,12 +345,23 @@ class BodyController{
         let wq = arm.extfidirPalmor.wristBone.quaternion;   // wrist quat
 
         // --- Wrist ---
-        // wrist did not know about arm quaternions. Compensate them
-        q0.copy( bones[ arm.loc.idx.shoulder ].quaternion );
-        q0.multiply( bones[ arm.loc.idx.arm ].quaternion );
-        q0.multiply( bones[ arm.loc.idx.elbow ].quaternion );
-        q0.invert();
-        wq.copy( arm._tempWristQuat ).premultiply( q0 );  
+        // wrist did not know about arm quaternions. Compensate them (instead of recomputing the extfidir and palmor)
+        {
+            // quaternions previous shoulder, arm, elbow = ps pa pe. In this pose, the extfidir & palmor was computed
+            // quaternions real after ik shoulder, arm elbow = rs ra re. After ik, hand is no longer pointing towards extfidir & palmor
+            // Objective: compute the local offset from previous to real, invert it and add it to the wrist. This compensates the offset and fixes the wrist direction
+            // delta = inv(ps, pa, pe) (rs, ra, re) --> inv(delta) = inv( ipe ipa ips (rs, ra, re)) = ire ira irs ps pa pe = inv(rs ra re) (ps pa pe)
+            // loop: generalise for any bone structure. Can be extended until root (hips) if needed  
+            let b = bones[ arm.loc.idx.wrist ].parent;
+            q0.set(0,0,0,1);
+            while( b.isBone && b != bones[ arm.loc.idx.shoulder ].parent ){
+                q0.premultiply(b.quaternion);
+                b = b.parent;
+            }
+
+            q0.invert().multiply( arm._wristBeforeFixParentsQuat );
+            wq.copy( q0 ).multiply( arm._wristBeforeFixQuat );  
+        }
         
         if ( !fixForearm ){ return } // whether to correct forearm twisting also
 
