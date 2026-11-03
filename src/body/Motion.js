@@ -200,15 +200,15 @@ class CircularMotion {
         if ( this.time < this.start ){ return this.finalOffset; }
         if ( this.time >= this.attackPeak && this.time <= this.relax ){ // necessary to update (at least once) or there might be a jump
             this.finalOffset.set(0,0,0);
-            this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.trgAngle ) );
-            this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.trgAngle ) );
+            this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.srcAngle + this.trgDeltaAngle ) );
+            this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.srcAngle + this.trgDeltaAngle ) );
             this.finalOffset.sub( this.startPoint );
             return this.finalOffset; 
         }
         if ( this.time >= this.relax && this.time <= this.end ){ 
             this.finalOffset.set(0,0,0);
-            this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.trgAngle ) );
-            this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.trgAngle ) );
+            this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.srcAngle + this.trgDeltaAngle ) );
+            this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.srcAngle + this.trgDeltaAngle ) );
             this.finalOffset.sub( this.startPoint );
             this.finalOffset.multiplyScalar( ( this.end - this.time ) / ( this.end - this.relax ) );
             return this.finalOffset;
@@ -226,8 +226,8 @@ class CircularMotion {
         
         // angle to rotate startPoint
         this.finalOffset.set(0,0,0);
-        this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.srcAngle * ( 1 - t ) + this.trgAngle * t ) );
-        this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.srcAngle * ( 1 - t ) + this.trgAngle * t ) );
+        this.finalOffset.addScaledVector( this.xAxis, Math.cos( this.srcAngle + this.trgDeltaAngle * t ) );
+        this.finalOffset.addScaledVector( this.yAxis, Math.sin( this.srcAngle + this.trgDeltaAngle * t ) );
         this.finalOffset.sub( this.startPoint );
 
         // zigzag 
@@ -244,8 +244,8 @@ class CircularMotion {
     /**
      * bml info
      * start, attackPeak, relax, end
-     * direction: string from 26 directions. Axis of rotation
-     * secondDirection: (optional)
+     * axis: string from 26 directions. Axis of rotation
+     * secondAxis: (optional)
      * distance: (optional) radius in metres of the circle.  Default 0.05 m (5 cm)
      * startAngle: (optional) where in the circle to start. 0º indicates up. Indicated in degrees. Default to 0º. [-infinity, +infinity]
      * endAngle: (optional) where in the circle to finish. 0º indicates up. Indicated in degrees. Default to 360º. [-infinity, +infinity]
@@ -263,27 +263,35 @@ class CircularMotion {
         let axisRatio = parseFloat( bml.ellipseAxisRatio ); // minor / major
         if ( isNaN( axisRatio ) ){ axisRatio = 1; } // basically a circle
 
-        if ( stringToDirection( bml.ellipseAxisDirection, _tempVec3_0, symmetry, true ) ){
-            _tempVec3_0.z = 0;
-            if ( _tempVec3_0.lengthSq() < 0.0001 ){ _tempVec3_0.set(1,0,0); }
-            else{ _tempVec3_0.normalize(); }
+        if ( stringToDirection( bml.ellipseAxisDirection, this.xAxis, symmetry, true ) ){
+            this.xAxis.z = 0;
+            if ( this.xAxis.lengthSq() < 0.0001 ){ _tempVec3_0.set(1,0,0); }
+            else{ this.xAxis.normalize(); }
         }else{
-            _tempVec3_0.set(1,0,0);
+            this.xAxis.set(1,0,0);
         }
-        this.xAxis.copy( _tempVec3_0 ).multiplyScalar( distance ); // set major axis
+        this.xAxis.multiplyScalar( distance ); // set major axis
         this.yAxis.set( -this.xAxis.y, this.xAxis.x, 0 ).multiplyScalar( axisRatio ); // set minor axis
 
         // normal axis
-        if ( !stringToDirection( bml.direction, _tempVec3_0, symmetry, true ) ){
-            console.warn( "Gesture: Location Motion no direction found with name \"" + bml.direction + "\"" );
+        if ( !stringToDirection( bml.axis, _tempVec3_0, symmetry, true ) ){
+            console.warn( "Gesture: Location Motion no direction found with name \"" + bml.axis + "\"" );
             return false;
         }
-        if ( !stringToDirection( bml.secondDirection, _tempVec3_1, symmetry, true ) ){
+        if ( !stringToDirection( bml.secondAxis, _tempVec3_1, symmetry, true ) ){
             _tempVec3_1.copy( _tempVec3_0 );
         }
         _tempVec3_1.lerpVectors( _tempVec3_1, _tempVec3_0, 0.5 );
         if( _tempVec3_1.lengthSq() < 0.0001 ){ _tempVec3_1.copy( _tempVec3_0 ); }
         _tempVec3_1.normalize(); // final axis perpendicular to circle
+
+        // left- rotates upwards, right rotates downwards,,, up rotates inwards, down rotates outwards,,, out rotates upwards, in rotates inwards
+        // for every axis, its reverse starts rotating from the same point but rotates in the opposite direction 
+        // when inwards or fully right, invert rotation direction (axis)  
+        if ( _tempVec3_1.z < 0 || (_tempVec3_1.y == 0 && _tempVec3_1.z == 0 ) ){
+            _tempVec3_1.multiplyScalar(-1);
+            this.yAxis.multiplyScalar(-1);
+        }
 
         // reorient ellipse normal from (0,0,1) to whatever axis the user specified
         let elevation = Math.asin( _tempVec3_1.y );
@@ -293,15 +301,16 @@ class CircularMotion {
         _tempQuat_0.premultiply( _tempQuat_1 );
         this.xAxis.applyQuaternion( _tempQuat_0 );
         this.yAxis.applyQuaternion( _tempQuat_0 );
-        
+
         // angle computations
         this.srcAngle = isNaN( bml.startAngle ) ? 0 : ( bml.startAngle * Math.PI / 180.0 );
-        this.trgAngle = isNaN( bml.endAngle ) ? ( this.srcAngle + 2 * Math.PI ) : ( bml.endAngle * Math.PI / 180.0 );
-        if( symmetry ){ // all symmetries mirror the same
-            this.trgAngle *= -1;
-            this.srcAngle *= -1;
+        this.trgDeltaAngle = isNaN( bml.cycles ) ? (2*Math.PI) : (bml.cycles * 2 * Math.PI);
+
+        if( symmetry ){ // all symmetries mirror the same. (In sigml it does not)
+            this.trgDeltaAngle *= -1;
+            this.srcAngle += Math.PI;
         }
-       
+
         this.startPoint.set(0,0,0);
         this.startPoint.addScaledVector( this.xAxis, Math.cos( this.srcAngle ) );
         this.startPoint.addScaledVector( this.yAxis, Math.sin( this.srcAngle ) );
@@ -466,7 +475,7 @@ class WristMotionThrowable{
 
         this.mode = 0; // FLAGS 0=NONE, 1=TWIST, 2=NOD, 4=SWING
         this.intensity = 1;
-        this.speed = 0; // if 0 do not repete
+        this.speed = 0; // cicles per second, 0 sets the "do not repeat" mode
 
         this.repDisplace = 0.5; // [0,1]
         this.repPhase = 0;
@@ -492,7 +501,16 @@ class WristMotionThrowable{
         this.end = bml.end;
         this.time = 0; 
 
-        this.speed = (isNaN( bml.cycles ) ? 3 : bml.cycles) / (this.end-this.start + 0.000001);
+        if (isNaN( bml.cycles )){
+            if( isNaN( bml.cyclesPerSec )){
+                this.speed = 3 / (this.end-this.start + 0.000001);
+            }else{
+                this.speed = bml.cyclesPerSec;
+            }
+        }else{
+            this.speed = bml.cycles / (this.end-this.start + 0.000001);
+        }
+
         if ( symmetry & E_FLAG_SYMMETRY_ALL ){ this.speed *= -1; }
         this.intensity = isNaN( bml.intensity ) ? 0.3 : bml.intensity;
         

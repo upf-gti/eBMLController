@@ -657,22 +657,21 @@ The motion is stopped if an arm location is executed afterwards.
     "end": 0.4,
     
     "motion": "CIRCULAR",
-    "direction": "O", // string, combination of 6 directions. Axis of rotation
+    "axis": "O", // string, combination of 6 directions. Axis of rotation
     
     // optionals
-    "secondDirection": "L", // string, combination of 6 directions. Will compute midpoint between direction and secondDirection.
+    "secondAxis": "L", // string, combination of 6 directions. Will compute midpoint between direction and secondDirection.
     "distance": 0.05, // number, radius in metres of the circle. Default 0.05 m (5 cm)
-    "startAngle": 0, // where in the circle to start. 0º indicates up. Indicated in degrees. Default to 0º. [-infinity, +infinity]
-    "endAngle": 360, // where in the circle to finish. 0º indicates up. Indicated in degrees. Default to 360º. [-infinity, +infinity]
+    "startAngle": 0, // where in the circle to start. 0º indicates up. Indicated in degrees. Default to 0º. (-infinity, +infinity)
+    "cycles": 1, // how many circles to perform (-infinity, +infinity)
     "ellipseAxisDirection": "ul", // string, direction of the major axis of the ellipse if the direction were set as 'O' (out). 'I' and 'O' are ignored. If unspecified, defaults to 'L'. 
     "ellipseAxisRatio": 0.5, // number. Sets the ellipse axes ratio minor/major, where 1 is a circle with radius "distance". If unspecified, defaults to 1. 
     "zigzag": "L", // string, combination of 6 directions
     "zigzagSize": 0.05, // amplitude of zigzag (from highest to lowest point) in metres. Default 0.01 m (1 cm)
     "zigzagSpeed": 3, // oscillations per second. Default 2
 
+    // sets the rotation axis and starting angle to the opposite 
     "lrSym":false,
-    "udSym":false,
-    "ioSym":false
 }
 ```
 

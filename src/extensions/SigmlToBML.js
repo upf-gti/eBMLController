@@ -1256,7 +1256,7 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         else{ result.distance = 0.12; }
 
         if ( attributes.second_direction ){
-            result.seconDirection = attributes.second_direction;
+            result.secondDirection = attributes.second_direction;
             if ( attributes.second_size == "big" ){ result.distance = 0.5 * result.distance + 0.5 * 0.15; }
             else if ( attributes.second_size == "small" ){  result.distance = 0.5 * result.distance + 0.5 * 0.06; }
         }
@@ -1282,40 +1282,42 @@ function simpleMotionParser( xml, start, hand, symmetry, signSpeed, signGeneralI
         let result = {};
         result.motion = "CIRCULAR";
         
-        result.direction = attributes.axis;
+        result.axis = attributes.axis;
         if ( attributes.size == "big" ){ result.distance = 0.1; }
         else if ( attributes.size == "small" ){ result.distance = 0.02; }
         else { result.distance = 0.05; }
         
         if ( attributes.second_axis ){
-            result.seconDirection = attributes.second_axis;
+            result.secondAxis = attributes.second_axis;
         }
 
-        let startDirection = stringToDirection( attributes.start, null, symmetry );
-        let endDirection = stringToDirection( attributes.end, null, symmetry );
-
+        let startDirection = stringToDirection( attributes.start, null, 0 );
+        
         if ( startDirection[0]*startDirection[0] + startDirection[1]*startDirection[1] + startDirection[2]*startDirection[2] < 0.0000001 ) { result.startAngle = 0; }
         else{ 
-            result.startAngle = Math.atan2( startDirection[1], startDirection[0] ) * 180 / Math.PI;
-            result.startAngle = result.startAngle < 0 ? ( 360 + result.startAngle ) : result.startAngle;     
+            // up means do not offset. right means offset clockwise. left means offset anticlockwise  
+            result.startAngle = Math.atan2( startDirection[0], startDirection[1] ) * 180 / Math.PI;
+            if (  typeof( result.axis ) == "string" && result.axis.includes("i") ){
+                result.startAngle *= -1;
+            }
         }
-        if ( endDirection[0]*endDirection[0] + endDirection[1]*endDirection[1] + endDirection[2]*endDirection[2] < 0.0000001 ) { result.endAngle = result.startAngle + 360; }
-        else{ 
-            result.endAngle = Math.atan2( endDirection[1], endDirection[0] ) * 180 / Math.PI; 
-            result.endAngle = result.endAngle < 0 ? ( 360 + result.endAngle ) : result.endAngle;
-        }
+        
+        // TODO - Now commented because it no longer makes sense with the new cycles attribute
+        // let endDirection = stringToDirection( attributes.end, null, symmetry );
+        // if ( endDirection[0]*endDirection[0] + endDirection[1]*endDirection[1] + endDirection[2]*endDirection[2] < 0.0000001 ) { result.cycles = 360; }
+        // else{ 
+        //     let endAngle = Math.atan2( endDirection[1], endDirection[0] ) * 180 / Math.PI; 
+        //     endAngle = result.endAngle < 0 ? ( 360 + result.endAngle ) : result.endAngle;
+        //     result.cycles = (endAngle - startAngle) / (2*Math.PI);
+        // }
+        result.cycles = 1;
 
         let clockplus = 0;
         if ( attributes.clockplus == "true" ){ clockplus++; }
         if ( attributes.second_clockplus == "true" ){ clockplus++; }
         if ( clockplus ){ 
-            let sign = ( result.endAngle - result.startAngle ) < -0.0001 ? -1 : 1;
-            result.endAngle = result.endAngle + 360 * clockplus * sign;
+            result.cycles += 360 * clockplus * Math.sign(result.cycles) ;
         } 
-        if ( typeof( result.direction ) == "string" && result.direction.includes( "i" ) ){
-                result.endAngle = (result.endAngle - result.startAngle) + ( result.startAngle * (-1) ); // new_start + old_deltaAngle
-                result.startAngle *= -1; // new_start
-        }
 
         if ( attributes.zigzag_style == "wavy" || attributes.zigzag_style == "zigzag" ){ 
             result.zigzag = "o"; 
