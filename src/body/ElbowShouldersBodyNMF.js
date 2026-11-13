@@ -186,11 +186,11 @@ class BodyMovement {
     }
 
     update( dt, forceBearing, forceElevation, forceTilt ){
-        if ( !this.transition ){ return; }
+        // if ( !this.transition ){ return; }
 
         let transition = false;
 
-        let tiltFBAngle = 0; //forceElevation;
+        let tiltFBAngle = forceElevation;
         for ( let i = 0; i < this.tiltFB.length; ++i ){
             let o = this.tiltFB[i];
             o.update( dt );
@@ -199,7 +199,7 @@ class BodyMovement {
             transition |= o.transition;
         }
 
-        let tiltLRAngle = 0; //forceTilt;
+        let tiltLRAngle = forceTilt;
         for ( let i = 0; i < this.tiltLR.length; ++i ){
             let o = this.tiltLR[i];
             o.update( dt );
@@ -208,7 +208,7 @@ class BodyMovement {
             transition |= o.transition;
         }
 
-        let rotateLRAngle = 0; //forceBearing;
+        let rotateLRAngle = forceBearing;
         for ( let i = 0; i < this.rotateLR.length; ++i ){
             let o = this.rotateLR[i];
             o.update( dt );

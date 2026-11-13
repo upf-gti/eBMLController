@@ -288,17 +288,18 @@ class BodyController{
     }
 
     update( dt ){
-        if ( !this.bodyMovement.transition && !this.right.needsUpdate && !this.left.needsUpdate && !this.handConstellation.transition ){ 
-            return;
-        }
-
+        // if ( !this.bodyMovement.transition && !this.right.needsUpdate && !this.left.needsUpdate && !this.handConstellation.transition ){ 
+        //     return;
+        // }
+        
+        
         this.bodyMovement.forceBindPose();
-
+        
         this._updatePreBody( dt, this.right );
         this._updatePreBody( dt, this.left );
-
-        this.bodyMovement.update( dt );
-
+        
+        this.bodyMovement.update( dt, 0, 0, 0 );
+        
         this._updateArmPostBody( dt, this.right );
         this._updateArmPostBody( dt, this.left );
         
@@ -327,7 +328,160 @@ class BodyController{
         this.left.ikSolver.reachTarget( this.left.locUpdatePoint, this.left.elbowRaise.curValue, this.left.shoulderRaise.curValue, this.left.shoulderHunch.curValue, true ); // ik + aesthetics
     
         this._fixArmQuats( this.right, true );   
-        this._fixArmQuats( this.left, true );  
+        this._fixArmQuats( this.left, true );
+
+        this._humanizerBody(dt);
+    }
+    
+    
+    // executed after all instructions are computed
+    _humanizerBody(dt){
+        if ( !this.testBodyOffset ){
+            this.testBodyOffset = [0,0,0]; //fb, lr, rotate
+            this.testArmSpeed = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)];
+            this.testArmPrevPos = [new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,0)];
+    
+            this.rootBindPos = new THREE.Vector3(0,0,0);
+            this.rootBindPosOffset = new THREE.Vector3(0,0,0);
+            let m4 = this.skeleton.boneInverses[0].clone().invert();
+            this.rootBindPos.setFromMatrixPosition(m4);
+
+            window.frotElbow = 1; 
+            window.fforwSpeed = 1; 
+            window.frotSpeed = 1;
+            window.rootPosFactor = 0.0;
+            window.applyInvert = true;
+        }
+
+        // update body offset
+        this.right.ikSolver.shoulderBone.updateWorldMatrix(true);
+        this.left.ikSolver.shoulderBone.updateWorldMatrix(true);
+        let ar = this.skeleton.bones[ this.config.boneMap["RArm"]].getWorldPosition(new THREE.Vector3());
+        let al = this.skeleton.bones[ this.config.boneMap["LArm"]].getWorldPosition(new THREE.Vector3());
+        let er = this.skeleton.bones[ this.config.boneMap["RElbow"]].getWorldPosition(new THREE.Vector3());
+        let el = this.skeleton.bones[ this.config.boneMap["LElbow"]].getWorldPosition(new THREE.Vector3());
+        let wr = this.skeleton.bones[ this.config.boneMap["RWrist"]].getWorldPosition(new THREE.Vector3());
+        let wl = this.skeleton.bones[ this.config.boneMap["LWrist"]].getWorldPosition(new THREE.Vector3());
+        let s = this.skeleton.bones[ this.config.boneMap["ShouldersUnion"]].getWorldPosition(new THREE.Vector3());
+        let lateral_dir = new THREE.Vector3();
+        let forward_dir = new THREE.Vector3();
+        let up_dir = new THREE.Vector3();
+        lateral_dir.subVectors(al,ar);
+        let lateralSize = lateral_dir.length(); // should not be zero
+        lateral_dir.divideScalar(lateralSize); // normalize
+        forward_dir.subVectors(s,al);
+        forward_dir.cross(lateral_dir).normalize();
+        up_dir.crossVectors(forward_dir, lateral_dir);
+
+        // compute in which state the raw bodyMovement is 
+        let preResetBodyQuat = new THREE.Quaternion(0,0,0,1);
+        let bone = this.skeleton.bones[ this.config.boneMap["ShouldersUnion"]];
+        while (bone && bone.isBone){
+            preResetBodyQuat.premultiply(bone.quaternion);
+            bone = bone.parent;
+        }
+
+      
+        let relbowdir = (new THREE.Vector3()).subVectors(er, ar).normalize();
+        let lelbowdir = (new THREE.Vector3()).subVectors(el, al).normalize();
+        let rwristdir = (new THREE.Vector3()).subVectors(wr, ar).normalize();
+        let lwristdir = (new THREE.Vector3()).subVectors(wl, al).normalize();
+
+        let speed = new THREE.Vector3();
+        speed.addVectors(lwristdir, rwristdir).sub(this.testArmPrevPos[0]).divideScalar(dt + 0.00001);
+        this.testArmPrevPos[0].addVectors(lwristdir, rwristdir);
+
+        this.testArmSpeed[0].multiplyScalar(0.99);
+        this.testArmSpeed[0].addScaledVector(speed, 0.01);
+
+        let vrot = 
+            relbowdir.dot(lateral_dir) * 20 * window.frotElbow +
+            lelbowdir.dot(lateral_dir) * 20 * window.frotElbow + 
+            this.testArmSpeed[0].dot(lateral_dir) * window.frotSpeed;
+
+        let vforw = 
+            this.testArmSpeed[0].dot(up_dir) * 2 * window.fforwSpeed;
+
+        this.testBodyOffset[2] = vrot;
+        this.testBodyOffset[0] = vforw;
+
+
+        let bodyQuat = new THREE.Quaternion(0,0,0,1);
+        bone = this.skeleton.bones[ this.config.boneMap["ShouldersUnion"]];
+        while (bone && bone.isBone){
+            bodyQuat.premultiply(bone.quaternion);
+            bone = bone.parent;
+        }
+
+        // recompute current body movement taking into account the new offsets. Offset could be manually computed instead of using bodyMovement
+        this.bodyMovement.forceBindPose();
+        this.bodyMovement.update( 0, this.testBodyOffset[2] * Math.PI/180 , this.testBodyOffset[0] * Math.PI/180 , this.testBodyOffset[1] * Math.PI/180  );
+        
+        // Body changed. Wrists should be in the same location as with the raw BodyMovement. Offset rotation needs to be subtracted from shoulders
+        // Assuming ShouldersUnion is the parent of Shoulders (which is not necessarily true for all avatars)
+        let postBodyQuat = new THREE.Quaternion(0,0,0,1);
+        bone = this.skeleton.bones[ this.config.boneMap["ShouldersUnion"]];
+        while (bone && bone.isBone){
+            postBodyQuat.premultiply(bone.quaternion);
+            bone = bone.parent;
+        }
+        let offsetQuatArms = postBodyQuat.clone().premultiply(bodyQuat.invert());
+        offsetQuatArms.invert();
+        let offsetQuatNeck = postBodyQuat.clone().premultiply(preResetBodyQuat.invert());
+        offsetQuatNeck.invert();
+        if  (window.applyinvert){
+            this.skeleton.bones[ this.config.boneMap["LShoulder"]].quaternion.premultiply(offsetQuatArms);
+            this.skeleton.bones[ this.config.boneMap["RShoulder"]].quaternion.premultiply(offsetQuatArms);
+            this.skeleton.bones[ this.config.boneMap["Neck"]].quaternion.premultiply(offsetQuatNeck);
+        }
+
+        // change hip location
+        this.rootBindPosOffset.multiplyScalar(0.99);
+        this.rootBindPosOffset.add( speed.multiplyScalar(window.rootPosFactor));
+        this.rootBindPosOffset.y *= 0.1;
+        let root = this.skeleton.bones[0];
+        root.position.copy(this.rootBindPos);
+   
+        root.updateWorldMatrix(true);
+        let parentm4 = root.parent.matrixWorld.clone();
+        parentm4.setPosition(0,0,0).invert();
+        let localRootoffset = this.rootBindPosOffset.clone().applyMatrix4( parentm4 ); // offset is in root coordinates
+
+        this._humanizerLegThing( localRootoffset, 57, 59 );
+        this._humanizerLegThing( localRootoffset, 62, 64 );
+
+        root.position.add(localRootoffset);
+    }
+
+    _humanizerLegThing( localOffset, legidx, heelidx ){
+        let mheel = this.skeleton.boneInverses[heelidx].clone().invert();
+        let mleg = this.skeleton.boneInverses[legidx].clone().invert();
+        let legPos = new THREE.Vector3(); 
+        let legMovedPos = new THREE.Vector3(); 
+        let heelPos = new THREE.Vector3(); 
+        heelPos.setFromMatrixPosition(mheel);
+        legPos.setFromMatrixPosition(mleg);
+        legMovedPos.copy(legPos).add(localOffset);
+        
+        let orDir= new THREE.Vector3();
+        let trgDir= new THREE.Vector3();
+        orDir.subVectors(heelPos, legPos).normalize();
+        trgDir.subVectors(heelPos, legMovedPos).normalize();
+
+        let q = new THREE.Quaternion();
+        q.setFromUnitVectors(orDir, trgDir);
+
+        let mlleg = this.skeleton.boneInverses[0].clone().multiply(mleg);
+        let mroot = this.skeleton.boneInverses[0].clone().invert();
+        
+        let qroot = new THREE.Quaternion(); 
+        mroot.decompose(new THREE.Vector3(), qroot, new THREE.Vector3());
+        let qleg = new THREE.Quaternion(); 
+        mlleg.decompose(new THREE.Vector3(), qleg, new THREE.Vector3());
+
+        q.multiply(qroot).premultiply(qroot.invert()).multiply(qleg);
+
+        this.skeleton.bones[legidx].quaternion.copy(q);        
     }
 
 
