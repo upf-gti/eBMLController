@@ -125,7 +125,7 @@ class ExtfidirPalmor {
             this.curQuat.multiply( this._tempQ_0 );
             let t = ( this.time - this.start ) / ( this.attackPeak - this.start );
             nlerpQuats( this.curQuat, this.srcQuat, this.curQuat, t );
-            //this.curQuat.slerpQuaternions( this.srcQuat, this.curQuat, t );
+            //this.curQuat.slerp( this.srcQuat, (1-t) );
 
             this.curAproxPalmor = this.palmor.srcAngle * (1-t) + this.palmor.trgAngle * t;
             this.wristBone.quaternion.copy( this.curQuat );
@@ -152,10 +152,9 @@ class ExtfidirPalmor {
                 this.transition = false;
             }
             nlerpQuats( this.curQuat, this.srcQuat, this.curQuat, t );
-            //this.curQuat.slerpQuaternions( this.srcQuat, this.curQuat, t ); 
+            //this.curQuat.slerpQuaternions( this.srcQuat, (1-t) ); 
             this.wristBone.quaternion.copy( this.curQuat );
             this.curAproxPalmor = this.palmor.trgAngle * (1-t) + this.palmor.defAngle * t;
-
         }
     }
 

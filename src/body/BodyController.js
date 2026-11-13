@@ -237,7 +237,7 @@ class BodyController{
         return computeFlag; 
     }
 
-    _updateHand( dt, arm ){
+    _updatePreBody( dt, arm ){
         let bones = this.skeleton.bones;
 
         // reset shoulder, arm, elbow. This way location body, motion and location hand can be safely computed
@@ -257,7 +257,7 @@ class BodyController{
 
     }
 
-    _updateArm( dt, arm ){
+    _updateArmPostBody( dt, arm ){
 
         // update arm posture world positions but do not commit results to the bones, yet.
         arm.loc.update( dt );
@@ -267,8 +267,8 @@ class BodyController{
         arm.shoulderRaise.update( dt );
         arm.shoulderHunch.update( dt );
 
-        // legacy, done here so if location is in update mode, the wrist behaves as before.
-        // TODO expose this as a parameter 
+        // done here so if location is in update mode, the wrist motion does not get stuck in the location.
+        // TODO - could be a controllable parameter 
         // wristmotion. ADD rotation to wrist
         arm.wristMotion.update(dt); // wrist - add rotation
         // backup the current wrist quaternion, before any arm rotation is applied. See fixquat function
@@ -294,13 +294,13 @@ class BodyController{
 
         this.bodyMovement.forceBindPose();
 
-        this._updateHand( dt, this.right );
-        this._updateHand( dt, this.left );
+        this._updatePreBody( dt, this.right );
+        this._updatePreBody( dt, this.left );
 
         this.bodyMovement.update( dt );
 
-        this._updateArm( dt, this.right );
-        this._updateArm( dt, this.left );
+        this._updateArmPostBody( dt, this.right );
+        this._updateArmPostBody( dt, this.left );
         
         if ( this.handConstellation.transition ){ 
             // 2 iks, one for body positioning and a second for hand constellation + motion

@@ -325,12 +325,12 @@ function signManual( xml, start, signSpeed ){
     let checkHandsResult = checkHandsUsage( result );
     if ( checkHandsResult["RIGHT"].isHandUsed ){
         if ( checkHandsResult["RIGHT"].firstHandUsage + 0.05 < checkHandsResult["RIGHT"].firstLocationBody ){ 
-            result.unshift( { type: "gesture",  start:start - 0.0001, attackPeak:start + TIMESLOT.LOC / signSpeed, locationBodyArm: "CHEST", secondLocationBodyArm: "STOMACH", hand: "RIGHT", distance: 0.37, side: "r", srcLocation: "HAND", srcSide: "PALMAR"  } );
+            result.unshift( { type: "gesture",  start:start - 0.0001, attackPeak:start + TIMESLOT.LOC / signSpeed, locationBodyArm: "CHEST", secondLocationBodyArm: "STOMACH", hand: "RIGHT", mode: "uc", distance: 0.37, side: "r", srcLocation: "HAND", srcSide: "PALMAR"  } );
         }
     }
     if ( checkHandsResult["LEFT"].isHandUsed ){
         if ( checkHandsResult["LEFT"].firstHandUsage + 0.05 < checkHandsResult["LEFT"].firstLocationBody ){ 
-            result.unshift( { type: "gesture",  start:start - 0.0001, attackPeak:start + TIMESLOT.LOC / signSpeed, locationBodyArm: "CHEST", secondLocationBodyArm: "STOMACH", hand: "LEFT", distance: 0.37, side: "l", srcLocation: "HAND", srcSide: "PALMAR"  } );
+            result.unshift( { type: "gesture",  start:start - 0.0001, attackPeak:start + TIMESLOT.LOC / signSpeed, locationBodyArm: "CHEST", secondLocationBodyArm: "STOMACH", hand: "LEFT", mode: "uc", distance: 0.37, side: "l", srcLocation: "HAND", srcSide: "PALMAR"  } );
         }
     }
 
@@ -564,7 +564,7 @@ function locationBodyArmParser( xml, start, attackPeak, hand, symmetry, signGene
         attributes[ xml.attributes[attr].name ] = xml.attributes[attr].value;
     }
 
-    let result = { type: "gesture", start: start - 0.00001, attackPeak: attackPeak, hand: hand }; // -0.000001 to avoid locationBodyArm cancelling motions or handconstellations
+    let result = { type: "gesture", start: start - 0.00001, attackPeak: attackPeak, hand: hand, mode: "uc" }; // -0.000001 to avoid locationBodyArm cancelling motions or handconstellations
 
     // usual body location
     if ( hand == "BOTH" && signGeneralInfo.bothHands ){ result.lrSym = true; }

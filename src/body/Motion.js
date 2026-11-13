@@ -172,7 +172,7 @@ class CircularMotion {
         this.yAxis = new THREE.Vector3(0,1,0);
         this.xAxis = new THREE.Vector3(1,0,0);
         this.startPoint = new THREE.Vector3(0,0,0);
-        this.trgAngle = 0; // target delta angle
+        this.trgDeltaAngle = 0; // target delta angle
         this.srcAngle = 0; 
 
         this.finalOffset = new THREE.Vector3(0,0,0);
@@ -183,7 +183,8 @@ class CircularMotion {
 
         this.transition = false;
         this.time = 0;
-
+        this.attackPeak = 0;
+        this.relax = 0;
         this.start = 0;
         this.end = 0;
     }
